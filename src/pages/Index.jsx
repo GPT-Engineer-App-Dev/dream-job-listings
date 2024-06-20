@@ -1,14 +1,35 @@
 import { useEffect, useState } from "react";
-import { Container, Text, VStack, Box, Heading, SimpleGrid, Card, CardHeader, CardBody, CardFooter, Button } from "@chakra-ui/react";
+import { Container, Text, VStack, Box, Heading, SimpleGrid, Card, CardHeader, CardBody, CardFooter, Button, FormControl, FormLabel, Input, Textarea } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 
 const Index = () => {
   const [jobListings, setJobListings] = useState([]);
+  const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [applicantName, setApplicantName] = useState("");
+  const [applicantEmail, setApplicantEmail] = useState("");
+  const [applicantResume, setApplicantResume] = useState("");
 
   useEffect(() => {
     const storedJobs = JSON.parse(localStorage.getItem("jobListings")) || [];
     setJobListings(storedJobs);
   }, []);
+
+  const handleApplyNow = (job) => {
+    setSelectedJob(job);
+    setShowApplicationForm(true);
+  };
+
+  const handleApplicationSubmit = (e) => {
+    e.preventDefault();
+    const newApplication = { jobId: selectedJob.title, applicantName, applicantEmail, applicantResume };
+    const existingApplications = JSON.parse(localStorage.getItem("jobApplications")) || [];
+    localStorage.setItem("jobApplications", JSON.stringify([...existingApplications, newApplication]));
+    setShowApplicationForm(false);
+    setApplicantName("");
+    setApplicantEmail("");
+    setApplicantResume("");
+  };
 
   return (
     <Container centerContent maxW="container.lg" py={10}>
@@ -26,8 +47,25 @@ const Index = () => {
                 <Text>{job.description}</Text>
               </CardBody>
               <CardFooter>
-                <Button colorScheme="teal">Apply Now</Button>
+                <Button colorScheme="teal" onClick={() => handleApplyNow(job)}>Apply Now</Button>
               </CardFooter>
+              {showApplicationForm && selectedJob === job && (
+                <Box as="form" onSubmit={handleApplicationSubmit} mt={4} p={4} borderWidth="1px" borderRadius="lg">
+                  <FormControl id="name" isRequired>
+                    <FormLabel>Name</FormLabel>
+                    <Input value={applicantName} onChange={(e) => setApplicantName(e.target.value)} />
+                  </FormControl>
+                  <FormControl id="email" isRequired mt={4}>
+                    <FormLabel>Email</FormLabel>
+                    <Input type="email" value={applicantEmail} onChange={(e) => setApplicantEmail(e.target.value)} />
+                  </FormControl>
+                  <FormControl id="resume" isRequired mt={4}>
+                    <FormLabel>Resume</FormLabel>
+                    <Textarea value={applicantResume} onChange={(e) => setApplicantResume(e.target.value)} />
+                  </FormControl>
+                  <Button type="submit" colorScheme="teal" size="lg" mt={4}>Submit Application</Button>
+                </Box>
+              )}
             </Card>
           ))}
         </SimpleGrid>
